@@ -1,0 +1,31 @@
+{
+  "discount_codes": [
+    {
+      "name": "OFR001",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "minimumDistance": 0,
+      "maximumDistance": 200,
+      "minimumWeight": 70,
+      "maximumWeight": 200
+    },
+    {
+      "name": "OFR002",
+      "discountType": "percentage",
+      "discountValue": 7,
+      "minimumDistance": 50,
+      "maximumDistance": 150,
+      "minimumWeight": 100,
+      "maximumWeight": 250
+    },
+    {
+      "name": "OFR003",
+      "discountType": "percentage",
+      "discountValue": 5,
+      "minimumDistance": 50,
+      "maximumDistance": 250,
+      "minimumWeight": 10,
+      "maximumWeight": 150
+    }
+  ]
+}

@@ -1,0 +1,75 @@
+import { DeliveryCostException } from "../exceptions/delivery-cost-exception";
+import type {
+  BaseDeliveryCost,
+  CourierDeliveryCost,
+  CourierPackage,
+} from "../interfaces";
+import { getDiscount } from "./get-disccount";
+
+export function calculateTotalDeliveryCost(
+  baseDeliveryCost: BaseDeliveryCost,
+  courierPackages: CourierPackage[],
+): CourierDeliveryCost[] {
+  return courierPackages.map((courierPackage) =>
+    calculateCourierPackageDeliveryCost(baseDeliveryCost, courierPackage),
+  );
+}
+
+function calculateCourierPackageDeliveryCost(
+  baseDeliveryCost: BaseDeliveryCost,
+  courierPackage: CourierPackage,
+): CourierDeliveryCost {
+  try {
+    const discountCodeName = courierPackage.discountCodeName || null;
+
+    if (!discountCodeName) {
+      return {
+        packageName: courierPackage.name,
+        totalDeliveryCost: calculateDeliveryCost(
+          baseDeliveryCost.baseCost,
+          courierPackage.weight,
+          courierPackage.distance,
+        ),
+        discountValue: 0,
+      };
+    }
+
+    const discount = getDiscount(
+      discountCodeName,
+      courierPackage.weight,
+      courierPackage.distance,
+      courierPackage.name,
+    );
+
+    const totalDeliveryCost = calculateDeliveryCost(
+      baseDeliveryCost.baseCost,
+      courierPackage.weight,
+      courierPackage.distance,
+    );
+
+    const discountedDeliveryCost =
+      discount.discountType === "flat"
+        ? totalDeliveryCost - discount.discountValue
+        : totalDeliveryCost -
+          (totalDeliveryCost * discount.discountValue) / 100;
+
+    return {
+      packageName: courierPackage.name,
+      totalDeliveryCost: discountedDeliveryCost,
+      discountValue: discount.discountValue,
+    };
+  } catch (error) {
+    throw new DeliveryCostException(
+      "Error calculating total delivery cost",
+      courierPackage.name,
+    ); // Return a default value or handle it as needed
+  }
+}
+
+function calculateDeliveryCost(
+  baseDeliveryCost: number,
+  weight: number,
+  distance: number,
+): number {
+  return baseDeliveryCost + weight * 10 + distance * 5;
+}

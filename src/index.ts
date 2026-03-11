@@ -1,3 +1,3 @@
-import { entryPointPrompt } from "./terminal-prompt";
+import { startCourierSystem } from "./terminal-prompt";
 
-entryPointPrompt();
+startCourierSystem();

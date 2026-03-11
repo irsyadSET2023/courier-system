@@ -7,7 +7,11 @@
       "minimumDistance": 0,
       "maximumDistance": 200,
       "minimumWeight": 70,
-      "maximumWeight": 200
+      "maximumWeight": 200,
+      "includeMinimumWeight": true,
+      "includeMinimumDistance": true,
+      "includeMaximumWeight": true,
+      "includeMaximumDistance": false
     },
     {
       "name": "OFR002",
@@ -16,7 +20,11 @@
       "minimumDistance": 50,
       "maximumDistance": 150,
       "minimumWeight": 100,
-      "maximumWeight": 250
+      "maximumWeight": 250,
+      "includeMinimumWeight": true,
+      "includeMinimumDistance": true,
+      "includeMaximumWeight": true,
+      "includeMaximumDistance": true
     },
     {
       "name": "OFR003",
@@ -25,7 +33,11 @@
       "minimumDistance": 50,
       "maximumDistance": 250,
       "minimumWeight": 10,
-      "maximumWeight": 150
+      "maximumWeight": 150,
+      "includeMinimumWeight": true,
+      "includeMinimumDistance": true,
+      "includeMaximumWeight": true,
+      "includeMaximumDistance": true
     }
   ]
 }

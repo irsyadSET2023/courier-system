@@ -1,4 +1,7 @@
-export function entryPointPrompt() {
+import { calculateDeliveryCostPrompt } from "./services/calculate-delivery-cost-prompt";
+import { handlePromptError, restartPrompt } from "./utils";
+
+export async function startCourierSystem() {
   try {
     const isReady = prompt(
       "Hi Kiki! Welcome to the Courier System. Are you ready to calculate delivery costs? (yes/no):",
@@ -10,20 +13,10 @@ export function entryPointPrompt() {
       prompt(
         "No worries! Take your time. When you're ready, just press Enter to calculate the delivery costs.",
       );
-      calculateDeliveryCostPrompt();
-      // console.log(
-      //   "No worries! Take your time. When you're ready, just run the program again.",
-      // );
+      restartPrompt(startCourierSystem);
     }
   } catch (error) {
     console.error("An error occurred while processing your input:");
-  }
-}
-
-function calculateDeliveryCostPrompt() {
-  try {
-    console.log("Great! Let's get started.");
-  } catch (error) {
-    console.error("An error occurred while calculating the delivery cost:");
+    await handlePromptError(startCourierSystem);
   }
 }

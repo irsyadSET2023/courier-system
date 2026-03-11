@@ -2,6 +2,7 @@ import { DeliveryCostException } from "../exceptions/delivery-cost-exception";
 import type {
   BaseDeliveryCost,
   CourierDeliveryCost,
+  CourierDeliveryCostResult,
   CourierPackage,
 } from "../interfaces";
 import { getDiscount } from "./get-disccount";
@@ -9,10 +10,25 @@ import { getDiscount } from "./get-disccount";
 export function calculateTotalDeliveryCost(
   baseDeliveryCost: BaseDeliveryCost,
   courierPackages: CourierPackage[],
-): CourierDeliveryCost[] {
-  return courierPackages.map((courierPackage) =>
+): CourierDeliveryCostResult {
+  const courierPackagesResults = courierPackages.map((courierPackage) =>
     calculateCourierPackageDeliveryCost(baseDeliveryCost, courierPackage),
   );
+
+  const totalDeliveryCost = courierPackagesResults.reduce(
+    (total, courierPackageResult) => {
+      return {
+        totalDiscount: total.totalDiscount + courierPackageResult.discountValue,
+        totalCost: total.totalCost + courierPackageResult.totalDeliveryCost,
+      };
+    },
+    { totalDiscount: 0, totalCost: 0 },
+  );
+
+  return {
+    totalDeliveryCost: totalDeliveryCost,
+    courierDeliveryCosts: courierPackagesResults,
+  };
 }
 
 function calculateCourierPackageDeliveryCost(

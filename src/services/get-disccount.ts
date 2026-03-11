@@ -1,6 +1,10 @@
 import { getDiscountCodes } from "../databases/load-database";
 import { InvalidDiscountCodeException } from "../exceptions/delivery-cost-exception";
-import type { DiscountCode, DiscountValueAndType } from "../interfaces";
+import type {
+  DiscountCode,
+  DiscountValueAndType,
+  RangeRule,
+} from "../interfaces";
 
 export function getDiscount(
   discountCodeName: string | null,
@@ -48,45 +52,55 @@ export function getDiscount(
 function checkDistanceValidity(
   discountCode: DiscountCode,
   packageDistance: number,
-) {
-  const discountCodeMinimumDistance = discountCode.minimumDistance;
-  const discountCodeMaximumDistance = discountCode.maximumDistance;
+): boolean {
+  return checkRange(packageDistance, {
+    min: discountCode.minimumDistance,
+    max: discountCode.maximumDistance,
+    includeMin: discountCode.includeMinimumDistance,
+    includeMax: discountCode.includeMaximumDistance,
+  });
 
-  if (!discountCodeMinimumDistance) {
-    if (packageDistance <= discountCodeMaximumDistance) {
-      return true;
-    }
-    return false;
-  }
+  // if (!discountCodeMinimumDistance) {
+  //   if (packageDistance <= discountCodeMaximumDistance) {
+  //     return true;
+  //   }
+  //   return false;
+  // }
 
-  if (
-    packageDistance >= discountCodeMinimumDistance &&
-    packageDistance <= discountCodeMaximumDistance
-  ) {
-    return true;
-  }
-  return false;
+  // if (
+  //   packageDistance >= discountCodeMinimumDistance &&
+  //   packageDistance <= discountCodeMaximumDistance
+  // ) {
+  //   return true;
+  // }
+  // return false;
 }
 
 function checkWeightValidity(
   discountCode: DiscountCode,
   packageWeight: number,
-) {
-  const discountCodeMinimumWeight = discountCode.minimumWeight;
-  const discountCodeMaximumWeight = discountCode.maximumWeight;
+): boolean {
+  return checkRange(packageWeight, {
+    min: discountCode.minimumWeight,
+    max: discountCode.maximumWeight,
+    includeMin: discountCode.includeMinimumWeight,
+    includeMax: discountCode.includeMaximumWeight,
+  });
+}
 
-  if (!discountCodeMinimumWeight) {
-    if (packageWeight <= discountCodeMaximumWeight) {
-      return true;
-    }
-    return false;
+/**
+ * Generic range validator
+ */
+function checkRange(value: number, rule: RangeRule): boolean {
+  if (rule.min !== undefined) {
+    const minCheck = rule.includeMin ? value >= rule.min : value > rule.min;
+    if (!minCheck) return false;
   }
 
-  if (
-    packageWeight >= discountCodeMinimumWeight &&
-    packageWeight <= discountCodeMaximumWeight
-  ) {
-    return true;
+  if (rule.max !== undefined) {
+    const maxCheck = rule.includeMax ? value <= rule.max : value < rule.max;
+    if (!maxCheck) return false;
   }
-  return false;
+
+  return true;
 }

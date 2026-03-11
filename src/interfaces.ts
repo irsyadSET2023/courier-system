@@ -7,7 +7,7 @@ export interface CourierPackage {
   name: string;
   weight: number;
   distance: number;
-  discountCodeName?: string;
+  discountCodeName: string | null;
 }
 
 export interface CourierDeliveryCost {
@@ -29,9 +29,25 @@ export interface DiscountCode {
   maximumWeight: number;
   minimumDistance: number;
   maximumDistance: number;
+  includeMinimumWeight: boolean;
+  includeMinimumDistance: boolean;
+  includeMaximumWeight: boolean;
+  includeMaximumDistance: boolean;
 }
 
 export interface DiscountValueAndType {
   discountType: string;
   discountValue: number;
+}
+
+export interface CourierDeliveryCostResult {
+  totalDeliveryCost: TotalDeliveryCost;
+  courierDeliveryCosts: CourierDeliveryCost[];
+}
+
+export interface RangeRule {
+  min: number;
+  max: number;
+  includeMin: boolean;
+  includeMax: boolean;
 }

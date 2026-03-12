@@ -72,7 +72,7 @@ export interface BatchDeliveryCourierPackage {
 }
 
 export interface VehicleDeliveryStatus {
-  vehicleNumber: string;
+  vehicleIndex: number;
   totalDeliveryTime: number;
   courierPackages: CourierPackage[] | null;
 }

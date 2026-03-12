@@ -4,14 +4,30 @@ import type {
   DeliveryCapacity,
   VehicleDeliveryStatus,
 } from "../interfaces";
+import { calculateVehicleDeliveryTime } from "./calculate-vehicle-delivery-time";
 
 export function calculateTotalDeliveryTime(
   deliveryCapacity: DeliveryCapacity | null,
-  courierPackages: CourierPackage[],
+  courierPackagesMaster: CourierPackage[],
 ) {
-  //   const totalPackages = courierPackages.length;
+  const courierPackageCombinationsToBeDelivered = getMostSuitableCombination(
+    deliveryCapacity!,
+    courierPackagesMaster,
+  );
+
+  const vehicleDeliveriesStatus = distiributePackagesToVehicles(
+    courierPackageCombinationsToBeDelivered,
+    deliveryCapacity!,
+  );
+}
+
+function getMostSuitableCombination(
+  deliveryCapacity: DeliveryCapacity,
+  courierPackagesMaster: CourierPackage[],
+): CourierPackageCombination {
   const possibleDeliveryPackageCombinations =
-    generatePossibleDeliveryPackageCombinations(courierPackages);
+    generatePossibleDeliveryPackageCombinations(courierPackagesMaster);
+
   const mappedDeliveryPackageCombinations = mapDeliveryPackageCombinations(
     possibleDeliveryPackageCombinations,
   );
@@ -22,9 +38,11 @@ export function calculateTotalDeliveryTime(
       deliveryCapacity!,
     );
 
-  const optimalCombinations = getOptimalCombinations(
+  const optimalCombination = getOptimalCombination(
     filteredDeliveryPackageCombinations,
   );
+
+  return optimalCombination;
 }
 
 function generatePossibleDeliveryPackageCombinations(
@@ -51,12 +69,19 @@ function generatePossibleDeliveryPackageCombinations(
 }
 
 function mapDeliveryPackageCombinations(
-  combinations: CourierPackage[][],
+  courierPackageCombinations: CourierPackage[][],
 ): CourierPackageCombination[] {
-  return combinations.map((combination) => {
-    const totalWeight = combination.reduce((sum, pkg) => sum + pkg.weight, 0);
-    const totalNumberOfPackages = combination.length;
-    return { combination, totalWeight, totalNumberOfPackages };
+  return courierPackageCombinations.map((courierPackageCombination) => {
+    const totalWeight = courierPackageCombination.reduce(
+      (sum, pkg) => sum + pkg.weight,
+      0,
+    );
+    const totalNumberOfPackages = courierPackageCombination.length;
+    return {
+      combination: courierPackageCombination,
+      totalWeight,
+      totalNumberOfPackages,
+    };
   });
 }
 
@@ -72,17 +97,18 @@ function removeCombinationsExceedingCapacity(
   );
 }
 
-function getOptimalCombinations(
+function getOptimalCombination(
   mappedCombinations: CourierPackageCombination[],
-): CourierPackageCombination[] {
+): CourierPackageCombination {
   const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
   const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
 
-  return mappedCombinations.filter(
+  const optimalCombination = mappedCombinations.find(
     (mappedCombination) =>
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
-  );
+  )!;
+  return optimalCombination;
 }
 
 function getHighestNumberOfPackagesPerDelivery(
@@ -106,24 +132,42 @@ function getHighestWeightPerDelivery(
 }
 
 function distiributePackagesToVehicles(
-  courierPackageCombinations: CourierPackageCombination[],
+  courierPackageCombination: CourierPackageCombination,
   deliveryCapacity: DeliveryCapacity,
 ) {
   const totalNumberOfVehicles = deliveryCapacity.numberOfVehicles;
+  const vehicleDeliveriesStatus = initializeVehicleDeliveriesStatus(
+    totalNumberOfVehicles,
+  );
+  const courierPackages = courierPackageCombination.combination;
+
+  vehicleDeliveriesStatus.forEach((vehicleDeliveryStatus) => {});
+}
+
+function vehicleSendPackages(
+  courierPackageCombination: CourierPackageCombination,
+  deliveryCapacity: DeliveryCapacity,
+) {
+  const vehicleDeliveryTime = calculateVehicleDeliveryTime(
+    deliveryCapacity.maxSpeed,
+    courierPackageCombination,
+  );
+
+  return vehicleDeliveryTime;
 }
 
 function initializeVehicleDeliveriesStatus(
   numberOfVehicles: number,
 ): VehicleDeliveryStatus[] {
-  const vehicleDeliveries = [];
+  const vehicleDeliveriesStatus = [];
 
   for (let i = 0; i < numberOfVehicles; i++) {
-    vehicleDeliveries.push({
-      vehicleNumber: `Vehicle ${i + 1}`,
+    vehicleDeliveriesStatus.push({
+      vehicleIndex: i + 1,
       totalDeliveryTime: 0,
       courierPackages: null,
     });
   }
 
-  return vehicleDeliveries;
+  return vehicleDeliveriesStatus;
 }

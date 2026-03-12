@@ -79,43 +79,27 @@ export async function calculateDeliveryCostPrompt() {
   }
 }
 
-async function parseCourierPackageInput(
+// Main function
+export async function parseCourierPackageInput(
   numberOfPackages: number,
 ): Promise<CourierPackage[]> {
-  const courierPackages = [];
+  const courierPackages: CourierPackage[] = [];
 
   try {
     for (let i = 0; i < numberOfPackages; i++) {
-      const packageName = prompt(`Please enter the name for package ${i + 1}:`);
-      let weightInput = prompt(`Please enter the weight for package ${i + 1}:`);
-
-      const isWeightExceedingLimit = checkIfCourierPackagesExceedMaximumWeight(
-        parseFloat(weightInput!),
-      );
-
-      if (isWeightExceedingLimit) {
-        weightInput = retryWeightInput(i, packageName!);
-      }
-
-      const distanceInput = prompt(
-        `Please enter the distance for package ${i + 1}:`,
-      );
-      const discountCodeName = prompt(
-        `Please enter the discount code name for package ${i + 1} (or leave blank if none):`,
-      );
-
-      if (!packageName || !weightInput || !distanceInput) {
-        await handlePromptError(startCourierSystem);
-        return [];
-      }
+      const packageName = await promptPackageName(i);
+      const weight = await promptPackageWeight(i, packageName!);
+      const distance = await promptPackageDistance(i, packageName!);
+      const discountCodeName = promptDiscountCode(i);
 
       courierPackages.push({
-        name: packageName as string,
-        weight: parseFloat(weightInput!),
-        distance: parseFloat(distanceInput!),
+        name: packageName!,
+        weight,
+        distance,
         discountCodeName: discountCodeName || null,
       });
     }
+
     return courierPackages;
   } catch (error) {
     console.error(
@@ -126,31 +110,81 @@ async function parseCourierPackageInput(
   }
 }
 
-function checkIfCourierPackagesExceedMaximumWeight(weight: number): boolean {
-  if (!maximumWeight) return false;
-  // Implement logic to check if the weight exceeds the maximum weight limit
-  if (weight > maximumWeight) {
-    return true;
+// Helper: Prompt package name
+async function promptPackageName(index: number): Promise<string | null> {
+  const name = prompt(`Please enter the name for package ${index + 1}:`);
+  if (!name) {
+    console.error("Package name cannot be empty.");
+    await handlePromptError(startCourierSystem);
+    return null;
   }
-  return false;
+  return name;
 }
 
-function retryWeightInput(packageIndex: number, packageName: string): string {
-  let retryWeightInput = prompt(
-    `The weight you entered exceeds the maximum weight limit of ${maximumWeight} kg. Please enter a valid weight for package ${
-      packageIndex + 1
-    } (${packageName}):`,
-  );
+// Helper: Prompt package weight with retries
+async function promptPackageWeight(
+  index: number,
+  packageName: string,
+): Promise<number> {
+  let weight: number | null = null;
 
-  while (
-    checkIfCourierPackagesExceedMaximumWeight(parseFloat(retryWeightInput!))
-  ) {
-    retryWeightInput = prompt(
-      `The weight you entered still exceeds the maximum weight limit of ${maximumWeight} kg. Please enter a valid weight for package ${
-        packageIndex + 1
-      } (${packageName}):`,
+  do {
+    const weightInput = prompt(
+      `Please enter the weight for package ${index + 1} (${packageName}):`,
     );
-  }
+    weight = parseFloat(weightInput ?? "");
 
-  return retryWeightInput as string;
+    if (isNaN(weight) || weight <= 0) {
+      console.error("Weight must be a valid number greater than 0.");
+      weight = null;
+      continue;
+    }
+
+    if (checkIfCourierPackagesExceedMaximumWeight(weight)) {
+      console.error(
+        `The weight exceeds the maximum weight limit of ${maximumWeight} kg.`,
+      );
+      weight = null;
+    }
+  } while (weight === null);
+
+  return weight;
+}
+
+// Helper: Prompt package distance with retries
+async function promptPackageDistance(
+  index: number,
+  packageName: string,
+): Promise<number> {
+  let distance: number | null = null;
+
+  do {
+    const distanceInput = prompt(
+      `Please enter the distance for package ${index + 1} (${packageName}):`,
+    );
+    distance = parseFloat(distanceInput ?? "");
+
+    if (isNaN(distance) || distance <= 0) {
+      console.error("Distance must be a valid number greater than 0.");
+      distance = null;
+    }
+  } while (distance === null);
+
+  return distance;
+}
+
+// Helper: Prompt optional discount code
+function promptDiscountCode(index: number): string | null {
+  return prompt(
+    `Please enter the discount code name for package ${index + 1} (or leave blank if none):`,
+  );
+}
+
+function checkIfCourierPackagesExceedMaximumWeight(
+  newPackageWeight: number,
+): boolean {
+  if (maximumWeight === undefined) return false;
+
+  const totalWeight = newPackageWeight;
+  return totalWeight > maximumWeight;
 }

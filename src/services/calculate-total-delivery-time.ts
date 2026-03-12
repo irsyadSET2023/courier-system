@@ -2,6 +2,7 @@ import type {
   CourierPackage,
   CourierPackageCombination,
   DeliveryCapacity,
+  VehicleDeliveryStatus,
 } from "../interfaces";
 
 export function calculateTotalDeliveryTime(
@@ -15,7 +16,15 @@ export function calculateTotalDeliveryTime(
     possibleDeliveryPackageCombinations,
   );
 
-  console.log(mappedDeliveryPackageCombinations);
+  const filteredDeliveryPackageCombinations =
+    removeCombinationsExceedingCapacity(
+      mappedDeliveryPackageCombinations,
+      deliveryCapacity!,
+    );
+
+  const optimalCombinations = getOptimalCombinations(
+    filteredDeliveryPackageCombinations,
+  );
 }
 
 function generatePossibleDeliveryPackageCombinations(
@@ -51,6 +60,31 @@ function mapDeliveryPackageCombinations(
   });
 }
 
+function removeCombinationsExceedingCapacity(
+  mappedCombinations: CourierPackageCombination[],
+  deliveryCapacity: DeliveryCapacity,
+): CourierPackageCombination[] {
+  return mappedCombinations.filter(
+    (mappedCombination) =>
+      mappedCombination.totalNumberOfPackages <=
+        deliveryCapacity.numberOfVehicles &&
+      mappedCombination.totalWeight <= deliveryCapacity.maxCarryWeight,
+  );
+}
+
+function getOptimalCombinations(
+  mappedCombinations: CourierPackageCombination[],
+): CourierPackageCombination[] {
+  const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
+  const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
+
+  return mappedCombinations.filter(
+    (mappedCombination) =>
+      mappedCombination.totalNumberOfPackages === maxPackages &&
+      mappedCombination.totalWeight === maxWeight,
+  );
+}
+
 function getHighestNumberOfPackagesPerDelivery(
   mappedCombinations: CourierPackageCombination[],
 ): number {
@@ -71,27 +105,25 @@ function getHighestWeightPerDelivery(
   );
 }
 
-function removeCombinationsExceedingCapacity(
-  mappedCombinations: CourierPackageCombination[],
+function distiributePackagesToVehicles(
+  courierPackageCombinations: CourierPackageCombination[],
   deliveryCapacity: DeliveryCapacity,
-): CourierPackageCombination[] {
-  return mappedCombinations.filter(
-    (mappedCombination) =>
-      mappedCombination.totalNumberOfPackages <=
-        deliveryCapacity.numberOfVehicles &&
-      mappedCombination.totalWeight <= deliveryCapacity.maxCarryWeight,
-  );
+) {
+  const totalNumberOfVehicles = deliveryCapacity.numberOfVehicles;
 }
 
-function getOptimalCombinations(
-  mappedCombinations: CourierPackageCombination[],
-): CourierPackageCombination[] {
-  const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
-  const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
+function initializeVehicleDeliveriesStatus(
+  numberOfVehicles: number,
+): VehicleDeliveryStatus[] {
+  const vehicleDeliveries = [];
 
-  return mappedCombinations.filter(
-    (combo) =>
-      combo.totalNumberOfPackages === maxPackages &&
-      combo.totalWeight === maxWeight,
-  );
+  for (let i = 0; i < numberOfVehicles; i++) {
+    vehicleDeliveries.push({
+      vehicleNumber: `Vehicle ${i + 1}`,
+      totalDeliveryTime: 0,
+      courierPackages: null,
+    });
+  }
+
+  return vehicleDeliveries;
 }

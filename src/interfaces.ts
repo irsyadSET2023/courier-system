@@ -9,6 +9,7 @@ export interface CourierPackage {
   weight: number;
   distance: number;
   discountCodeName: string | null;
+  deliveryTime?: number;
 }
 
 export interface CourierDeliveryCost {
@@ -63,4 +64,15 @@ export interface CourierPackageCombination {
   combination: CourierPackage[];
   totalWeight: number;
   totalNumberOfPackages: number;
+}
+
+export interface BatchDeliveryCourierPackage {
+  totalDeliveryTime: number;
+  courierPackages: CourierPackage[];
+}
+
+export interface VehicleDeliveryStatus {
+  vehicleNumber: string;
+  totalDeliveryTime: number;
+  courierPackages: CourierPackage[] | null;
 }

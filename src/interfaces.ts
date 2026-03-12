@@ -1,6 +1,7 @@
 export interface BaseDeliveryCost {
   baseCost: number;
   numberOfPackages: number;
+  maximumWeight?: number;
 }
 
 export interface CourierPackage {
@@ -50,4 +51,16 @@ export interface RangeRule {
   max: number;
   includeMin: boolean;
   includeMax: boolean;
+}
+
+export interface DeliveryCapacity {
+  numberOfVehicles: number;
+  maxSpeed: number;
+  maxCarryWeight: number;
+}
+
+export interface CourierPackageCombination {
+  combination: CourierPackage[];
+  totalWeight: number;
+  totalNumberOfPackages: number;
 }

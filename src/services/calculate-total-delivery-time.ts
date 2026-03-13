@@ -4,6 +4,7 @@ import type {
   DeliveryCapacity,
   VehicleDeliveryStatus,
 } from "../interfaces";
+import { deliveryCostConfig } from "../config/delivery-time";
 import { calculateVehicleDeliveryTime } from "./calculate-vehicle-delivery-time";
 
 export function calculateTotalDeliveryTime(
@@ -101,13 +102,33 @@ function getOptimalCombination(
   const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
   const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
 
-  const optimalCombination = mappedCombinations.find(
+  const optimalCombinations = mappedCombinations.filter(
     (mappedCombination) =>
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
-  )!;
+  );
 
-  return optimalCombination;
+  if (optimalCombinations.length === 1) {
+    return optimalCombinations[0]!;
+  }
+
+  return resolveOptimalCombinationTie(optimalCombinations);
+}
+
+export function resolveOptimalCombinationTie(
+  tiedCombinations: CourierPackageCombination[],
+): CourierPackageCombination {
+  const preferShorter =
+    deliveryCostConfig.preferShorterDistance === true ||
+    deliveryCostConfig.preferShorterDistance === "true";
+
+  const sorted = [...tiedCombinations].sort((a, b) => {
+    const distanceA = a.combination.reduce((sum, pkg) => sum + pkg.distance, 0);
+    const distanceB = b.combination.reduce((sum, pkg) => sum + pkg.distance, 0);
+    return preferShorter ? distanceA - distanceB : distanceB - distanceA;
+  });
+
+  return sorted[0]!;
 }
 
 function getHighestNumberOfPackagesPerDelivery(

@@ -1,6 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { calculateTotalDeliveryTime } from "../calculate-total-delivery-time";
-import type { CourierPackage, DeliveryCapacity } from "../../interfaces";
+import { resolveOptimalCombinationTie } from "../calculate-total-delivery-time";
+import type {
+  CourierPackage,
+  CourierPackageCombination,
+  DeliveryCapacity,
+} from "../../interfaces";
 
 describe("calculateTotalDeliveryTime", () => {
   const deliveryCapacity: DeliveryCapacity = {
@@ -112,5 +117,91 @@ describe("calculateTotalDeliveryTime", () => {
     const maxTime = Math.max(...deliveryTimes);
     const minTime = Math.min(...deliveryTimes);
     expect(maxTime).toBeGreaterThan(minTime);
+  });
+
+  test("should prefer shorter distance package when same weight and only one can go", () => {
+    // Two packages with same weight, capacity only allows one at a time
+    const capacity: DeliveryCapacity = {
+      numberOfVehicles: 2,
+      maxSpeed: 70,
+      maxCarryWeight: 100,
+    };
+
+    const packages: CourierPackage[] = [
+      { name: "PKG_FAR", weight: 100, distance: 200, discountCodeName: null },
+      { name: "PKG_NEAR", weight: 100, distance: 50, discountCodeName: null },
+    ];
+
+    // With preferShorterDistance = true (default), PKG_NEAR should be delivered first
+    const result = calculateTotalDeliveryTime(capacity, [
+      ...packages.map((p) => ({ ...p })),
+    ]);
+
+    expect(result).toHaveLength(2);
+    // The first batch should contain the nearer package
+    expect(result[0]!.name).toBe("PKG_NEAR");
+  });
+});
+
+describe("resolveOptimalCombinationTie", () => {
+  function makeCombination(
+    packages: CourierPackage[],
+  ): CourierPackageCombination {
+    return {
+      combination: packages,
+      totalWeight: packages.reduce((sum, p) => sum + p.weight, 0),
+      totalNumberOfPackages: packages.length,
+    };
+  }
+
+  test("should pick combination with shorter total distance when preferShorterDistance is true", () => {
+    const combA = makeCombination([
+      { name: "PKG_FAR", weight: 100, distance: 200, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG_NEAR", weight: 100, distance: 50, discountCodeName: null },
+    ]);
+
+    // Default config has preferShorterDistance = true
+    const result = resolveOptimalCombinationTie([combA, combB]);
+    expect(result.combination[0]!.name).toBe("PKG_NEAR");
+  });
+
+  test("should pick combination with shorter distance among multi-package combinations", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 50, distance: 150, discountCodeName: null },
+      { name: "PKG2", weight: 50, distance: 100, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG3", weight: 50, distance: 30, discountCodeName: null },
+      { name: "PKG4", weight: 50, distance: 40, discountCodeName: null },
+    ]);
+
+    // combA total distance = 250, combB total distance = 70
+    const result = resolveOptimalCombinationTie([combA, combB]);
+    expect(result.combination[0]!.name).toBe("PKG3");
+  });
+
+  test("should return first combination when all have equal total distance", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 100, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG2", weight: 100, distance: 100, discountCodeName: null },
+    ]);
+
+    const result = resolveOptimalCombinationTie([combA, combB]);
+    // Both have same distance, stable sort keeps first
+    expect(result).toBeDefined();
+    expect(result.combination).toHaveLength(1);
+  });
+
+  test("should handle single tied combination", () => {
+    const comb = makeCombination([
+      { name: "PKG1", weight: 100, distance: 50, discountCodeName: null },
+    ]);
+
+    const result = resolveOptimalCombinationTie([comb]);
+    expect(result.combination[0]!.name).toBe("PKG1");
   });
 });

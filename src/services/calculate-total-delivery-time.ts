@@ -7,7 +7,7 @@ import type {
 import { calculateVehicleDeliveryTime } from "./calculate-vehicle-delivery-time";
 
 export function calculateTotalDeliveryTime(
-  deliveryCapacity: DeliveryCapacity | null,
+  deliveryCapacity: DeliveryCapacity,
   courierPackagesMaster: CourierPackage[],
 ): CourierPackage[] {
   const courierPackageWithDeliveryTime =
@@ -33,7 +33,7 @@ function getMostSuitableCombination(
   const filteredDeliveryPackageCombinations =
     removeCombinationsExceedingCapacity(
       mappedDeliveryPackageCombinations,
-      deliveryCapacity!,
+      deliveryCapacity,
     );
 
   const optimalCombination = getOptimalCombination(
@@ -101,15 +101,11 @@ function getOptimalCombination(
   const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
   const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
 
-  // console.log("Mapped Combinations:", mappedCombinations);
-
   const optimalCombination = mappedCombinations.find(
     (mappedCombination) =>
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
   )!;
-
-  console.log("Optimal Combination:", optimalCombination);
 
   return optimalCombination;
 }
@@ -158,10 +154,15 @@ function calculateEveryCourierPackageDeliveryTime(
     const courierPackagesWithTotalDeliveryTime = calculateVehicleDeliveryTime(
       deliveryCapacity.maxSpeed,
       courierPackageCombination,
+      vehicleForNextDelivery.totalDeliveryTime,
     );
 
-    courierPackagesWithTotalDeliveryTime.totalDeliveryTime +=
-      vehicleForNextDelivery.totalDeliveryTime;
+    courierPackagesWithTotalDeliveryTime.totalDeliveryTime =
+      Math.round(
+        (courierPackagesWithTotalDeliveryTime.totalDeliveryTime +
+          vehicleForNextDelivery.totalDeliveryTime) *
+          100,
+      ) / 100;
 
     vehicleForNextDelivery.courierPackages =
       courierPackagesWithTotalDeliveryTime.courierPackages;

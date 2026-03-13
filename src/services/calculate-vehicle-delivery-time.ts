@@ -1,12 +1,12 @@
 import type {
   BatchDeliveryCourierPackage,
-  CourierPackage,
   CourierPackageCombination,
 } from "../interfaces";
 
 export function calculateVehicleDeliveryTime(
   maxSpeed: number,
   courierPackagesCombinations: CourierPackageCombination,
+  initialVehicleDeliveryTime: number = 0,
 ): BatchDeliveryCourierPackage {
   const courierPackages = courierPackagesCombinations.combination;
 
@@ -14,12 +14,11 @@ export function calculateVehicleDeliveryTime(
 
   const courierPackagesWithRespectiveDeliverTimes = courierPackages.map(
     (courierPackage) => {
-      const courierPackageDeliveryTime = Math.round(
-        courierPackage.distance / maxSpeed,
-      );
+      const courierPackageDeliveryTime =
+        Math.round((courierPackage.distance / maxSpeed) * 100) / 100;
       return {
         ...courierPackage,
-        deliveryTime: courierPackageDeliveryTime,
+        deliveryTime: courierPackageDeliveryTime + initialVehicleDeliveryTime,
       };
     },
   );
@@ -35,7 +34,7 @@ export function calculateVehicleDeliveryTime(
 
   return {
     courierPackages: courierPackagesWithRespectiveDeliverTimes,
-    totalDeliveryTime: backAndForthDeliveryTime,
+    totalDeliveryTime: backAndForthDeliveryTime + initialVehicleDeliveryTime,
   };
 }
 

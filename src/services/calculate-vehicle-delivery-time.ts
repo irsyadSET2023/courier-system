@@ -14,10 +14,12 @@ export function calculateVehicleDeliveryTime(
 
   const courierPackagesWithRespectiveDeliverTimes = courierPackages.map(
     (courierPackage) => {
-      const deliveryTime = Math.round(courierPackage.distance / maxSpeed) * 2;
+      const courierPackageDeliveryTime = Math.round(
+        courierPackage.distance / maxSpeed,
+      );
       return {
         ...courierPackage,
-        deliveryTime,
+        deliveryTime: courierPackageDeliveryTime,
       };
     },
   );

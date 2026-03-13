@@ -101,11 +101,16 @@ function getOptimalCombination(
   const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
   const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
 
+  // console.log("Mapped Combinations:", mappedCombinations);
+
   const optimalCombination = mappedCombinations.find(
     (mappedCombination) =>
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
   )!;
+
+  console.log("Optimal Combination:", optimalCombination);
+
   return optimalCombination;
 }
 

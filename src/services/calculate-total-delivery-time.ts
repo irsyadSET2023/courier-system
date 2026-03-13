@@ -10,10 +10,11 @@ export function calculateTotalDeliveryTime(
   deliveryCapacity: DeliveryCapacity | null,
   courierPackagesMaster: CourierPackage[],
 ): CourierPackage[] {
-  const courierPackageWithDeliveryTime = distiributePackagesToVehicles(
-    deliveryCapacity!,
-    courierPackagesMaster,
-  );
+  const courierPackageWithDeliveryTime =
+    calculateEveryCourierPackageDeliveryTime(
+      deliveryCapacity!,
+      courierPackagesMaster,
+    );
 
   return courierPackageWithDeliveryTime;
 }
@@ -128,7 +129,7 @@ function getHighestWeightPerDelivery(
   );
 }
 
-function distiributePackagesToVehicles(
+function calculateEveryCourierPackageDeliveryTime(
   deliveryCapacity: DeliveryCapacity,
   courierPackageMaster: CourierPackage[],
 ) {
@@ -174,19 +175,6 @@ function distiributePackagesToVehicles(
   }
 
   return courierPackagesWithDeliveryTime;
-}
-
-function vehicleSendPackages(
-  courierPackageCombination: CourierPackageCombination,
-  deliveryCapacity: DeliveryCapacity,
-  vehicleDeliveryStatus: VehicleDeliveryStatus,
-) {
-  const vehicleDeliveryTime = calculateVehicleDeliveryTime(
-    deliveryCapacity.maxSpeed,
-    courierPackageCombination,
-  );
-
-  return vehicleDeliveryTime;
 }
 
 function initializeVehicleDeliveriesStatus(

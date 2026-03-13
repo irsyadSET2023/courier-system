@@ -1,9 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { calculateTotalDeliveryCost } from "../calculate-total-delivery-cost";
-import type {
-  BaseDeliveryCost,
-  CourierPackage,
-} from "../../interfaces";
+import type { BaseDeliveryCost, CourierPackage } from "../../interfaces";
 
 describe("calculateTotalDeliveryCost", () => {
   const baseDeliveryCost: BaseDeliveryCost = {

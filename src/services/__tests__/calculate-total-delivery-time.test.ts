@@ -20,9 +20,7 @@ describe("calculateTotalDeliveryTime", () => {
     expect(result[0]!.name).toBe("PKG1");
     expect(result[0]!.deliveryTime).toBeDefined();
     // distance/maxSpeed = 30/70 = 0.42 (floored to 2dp)
-    expect(result[0]!.deliveryTime).toBe(
-      Math.floor((30 / 70) * 100) / 100,
-    );
+    expect(result[0]!.deliveryTime).toBe(Math.floor((30 / 70) * 100) / 100);
   });
 
   test("should calculate delivery time for multiple packages in one batch", () => {

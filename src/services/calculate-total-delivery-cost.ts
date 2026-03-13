@@ -63,11 +63,15 @@ function calculateCourierPackageDeliveryCost(
       courierPackage.distance,
     );
 
-    const discountedDeliveryCost =
-      discount.discountType === "flat"
-        ? totalDeliveryCost - discount.discountValue
-        : totalDeliveryCost -
-          (totalDeliveryCost * discount.discountValue) / 100;
+    let totalDiscountValue: number = 0;
+
+    if (discount.discountType === "flat") {
+      totalDiscountValue = discount.discountValue;
+    } else {
+      totalDiscountValue = (totalDeliveryCost * discount.discountValue) / 100;
+    }
+
+    const discountedDeliveryCost = totalDeliveryCost - totalDiscountValue;
 
     return {
       packageName: courierPackage.name,

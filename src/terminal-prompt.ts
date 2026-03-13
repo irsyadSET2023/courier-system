@@ -49,7 +49,7 @@ async function runCourierPrompt() {
     const wantsTime = choice === "2" || choice === "3";
 
     const baseDeliveryCostInput = wantsCost
-      ? prompt("Please enter the base delivery cost:")
+      ? prompt("Please enter the base delivery cost (RM):")
       : null;
     const numberOfPackagesInput = prompt(
       "Please enter the number of packages:",

@@ -158,7 +158,7 @@ function calculateEveryCourierPackageDeliveryTime(
     );
 
     courierPackagesWithTotalDeliveryTime.totalDeliveryTime =
-      Math.round(
+      Math.floor(
         (courierPackagesWithTotalDeliveryTime.totalDeliveryTime +
           vehicleForNextDelivery.totalDeliveryTime) *
           100,

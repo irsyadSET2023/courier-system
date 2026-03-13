@@ -15,7 +15,7 @@ export function calculateVehicleDeliveryTime(
   const courierPackagesWithRespectiveDeliverTimes = courierPackages.map(
     (courierPackage) => {
       const courierPackageDeliveryTime =
-        Math.round((courierPackage.distance / maxSpeed) * 100) / 100;
+        Math.floor((courierPackage.distance / maxSpeed) * 100) / 100;
       return {
         ...courierPackage,
         deliveryTime: courierPackageDeliveryTime + initialVehicleDeliveryTime,

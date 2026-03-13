@@ -76,7 +76,7 @@ function calculateCourierPackageDeliveryCost(
     return {
       packageName: courierPackage.name,
       totalDeliveryCost: discountedDeliveryCost,
-      discountValue: discount.discountValue,
+      discountValue: totalDiscountValue,
     };
   } catch (error) {
     throw new DeliveryCostException(

@@ -1,6 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { calculateTotalDeliveryTime } from "../calculate-total-delivery-time";
-import { resolveOptimalCombinationTie } from "../calculate-total-delivery-time";
+import {
+  calculateTotalDeliveryTime,
+  isSinglePackageSameWeightTie,
+  resolveSinglePackageTieByDistance,
+} from "../calculate-total-delivery-time";
 import type {
   CourierPackage,
   CourierPackageCombination,
@@ -119,8 +122,9 @@ describe("calculateTotalDeliveryTime", () => {
     expect(maxTime).toBeGreaterThan(minTime);
   });
 
-  test("should prefer shorter distance package when same weight and only one can go", () => {
-    // Two packages with same weight, capacity only allows one at a time
+  test("should prefer shorter distance package when remaining single packages have same weight", () => {
+    // 3 packages: first one is different weight and gets sent first.
+    // Remaining two have same weight and only one fits per vehicle — triggers the tie-breaker.
     const capacity: DeliveryCapacity = {
       numberOfVehicles: 2,
       maxSpeed: 70,
@@ -128,22 +132,32 @@ describe("calculateTotalDeliveryTime", () => {
     };
 
     const packages: CourierPackage[] = [
+      { name: "PKG_LIGHT", weight: 50, distance: 70, discountCodeName: null },
       { name: "PKG_FAR", weight: 100, distance: 200, discountCodeName: null },
       { name: "PKG_NEAR", weight: 100, distance: 50, discountCodeName: null },
     ];
 
-    // With preferShorterDistance = true (default), PKG_NEAR should be delivered first
+    // PKG_LIGHT + one of the 100kg packages can go first batch (150kg <= capacity? no, 100kg max)
+    // Actually with 100kg max, only one package at a time since each is >= 50kg and combinations are limited
+    // After PKG_LIGHT is sent, PKG_FAR and PKG_NEAR remain with same weight
+    // With preferShorterDistance = true (default), PKG_NEAR should be picked before PKG_FAR
     const result = calculateTotalDeliveryTime(capacity, [
       ...packages.map((p) => ({ ...p })),
     ]);
 
-    expect(result).toHaveLength(2);
-    // The first batch should contain the nearer package
-    expect(result[0]!.name).toBe("PKG_NEAR");
+    expect(result).toHaveLength(3);
+
+    // Among the two 100kg packages, the nearer one should be delivered before the farther one
+    const pkg100Results = result.filter(
+      (p) => p.name === "PKG_NEAR" || p.name === "PKG_FAR",
+    );
+    const nearPkg = pkg100Results.find((p) => p.name === "PKG_NEAR")!;
+    const farPkg = pkg100Results.find((p) => p.name === "PKG_FAR")!;
+    expect(nearPkg.deliveryTime!).toBeLessThan(farPkg.deliveryTime!);
   });
 });
 
-describe("resolveOptimalCombinationTie", () => {
+describe("isSinglePackageSameWeightTie", () => {
   function makeCombination(
     packages: CourierPackage[],
   ): CourierPackageCombination {
@@ -154,7 +168,62 @@ describe("resolveOptimalCombinationTie", () => {
     };
   }
 
-  test("should pick combination with shorter total distance when preferShorterDistance is true", () => {
+  test("should return true when all combinations are single packages with same weight", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 200, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG2", weight: 100, distance: 50, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightTie([combA, combB])).toBe(true);
+  });
+
+  test("should return false when combinations have different weights", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 200, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG2", weight: 80, distance: 50, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightTie([combA, combB])).toBe(false);
+  });
+
+  test("should return false when combinations have multiple packages", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 50, distance: 200, discountCodeName: null },
+      { name: "PKG2", weight: 50, distance: 100, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG3", weight: 50, distance: 50, discountCodeName: null },
+      { name: "PKG4", weight: 50, distance: 30, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightTie([combA, combB])).toBe(false);
+  });
+
+  test("should return false when only one combination exists", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 200, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightTie([combA])).toBe(false);
+  });
+});
+
+describe("resolveSinglePackageTieByDistance", () => {
+  function makeCombination(
+    packages: CourierPackage[],
+  ): CourierPackageCombination {
+    return {
+      combination: packages,
+      totalWeight: packages.reduce((sum, p) => sum + p.weight, 0),
+      totalNumberOfPackages: packages.length,
+    };
+  }
+
+  test("should pick package with shorter distance when preferShorterDistance is true", () => {
     const combA = makeCombination([
       { name: "PKG_FAR", weight: 100, distance: 200, discountCodeName: null },
     ]);
@@ -163,26 +232,20 @@ describe("resolveOptimalCombinationTie", () => {
     ]);
 
     // Default config has preferShorterDistance = true
-    const result = resolveOptimalCombinationTie([combA, combB]);
+    const result = resolveSinglePackageTieByDistance([combA, combB]);
     expect(result.combination[0]!.name).toBe("PKG_NEAR");
   });
 
-  test("should pick combination with shorter distance among multi-package combinations", () => {
-    const combA = makeCombination([
-      { name: "PKG1", weight: 50, distance: 150, discountCodeName: null },
-      { name: "PKG2", weight: 50, distance: 100, discountCodeName: null },
-    ]);
-    const combB = makeCombination([
-      { name: "PKG3", weight: 50, distance: 30, discountCodeName: null },
-      { name: "PKG4", weight: 50, distance: 40, discountCodeName: null },
+  test("should return the only combination when just one exists", () => {
+    const comb = makeCombination([
+      { name: "PKG1", weight: 100, distance: 50, discountCodeName: null },
     ]);
 
-    // combA total distance = 250, combB total distance = 70
-    const result = resolveOptimalCombinationTie([combA, combB]);
-    expect(result.combination[0]!.name).toBe("PKG3");
+    const result = resolveSinglePackageTieByDistance([comb]);
+    expect(result.combination[0]!.name).toBe("PKG1");
   });
 
-  test("should return first combination when all have equal total distance", () => {
+  test("should handle packages with equal distance", () => {
     const combA = makeCombination([
       { name: "PKG1", weight: 100, distance: 100, discountCodeName: null },
     ]);
@@ -190,18 +253,23 @@ describe("resolveOptimalCombinationTie", () => {
       { name: "PKG2", weight: 100, distance: 100, discountCodeName: null },
     ]);
 
-    const result = resolveOptimalCombinationTie([combA, combB]);
-    // Both have same distance, stable sort keeps first
+    const result = resolveSinglePackageTieByDistance([combA, combB]);
     expect(result).toBeDefined();
     expect(result.combination).toHaveLength(1);
   });
 
-  test("should handle single tied combination", () => {
-    const comb = makeCombination([
-      { name: "PKG1", weight: 100, distance: 50, discountCodeName: null },
+  test("should correctly sort among multiple tied combinations", () => {
+    const combA = makeCombination([
+      { name: "PKG_FAR", weight: 100, distance: 300, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG_MID", weight: 100, distance: 150, discountCodeName: null },
+    ]);
+    const combC = makeCombination([
+      { name: "PKG_NEAR", weight: 100, distance: 50, discountCodeName: null },
     ]);
 
-    const result = resolveOptimalCombinationTie([comb]);
-    expect(result.combination[0]!.name).toBe("PKG1");
+    const result = resolveSinglePackageTieByDistance([combA, combB, combC]);
+    expect(result.combination[0]!.name).toBe("PKG_NEAR");
   });
 });

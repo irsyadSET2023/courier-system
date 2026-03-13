@@ -37,6 +37,12 @@ function getMostSuitableCombination(
       deliveryCapacity,
     );
 
+  if (isSinglePackageSameWeightTie(filteredDeliveryPackageCombinations)) {
+    return resolveSinglePackageTieByDistance(
+      filteredDeliveryPackageCombinations,
+    );
+  }
+
   const optimalCombination = getOptimalCombination(
     filteredDeliveryPackageCombinations,
   );
@@ -102,29 +108,39 @@ function getOptimalCombination(
   const maxPackages = getHighestNumberOfPackagesPerDelivery(mappedCombinations);
   const maxWeight = getHighestWeightPerDelivery(mappedCombinations);
 
-  const optimalCombinations = mappedCombinations.filter(
+  const optimalCombination = mappedCombinations.find(
     (mappedCombination) =>
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
-  );
+  )!;
 
-  if (optimalCombinations.length === 1) {
-    return optimalCombinations[0]!;
-  }
-
-  return resolveOptimalCombinationTie(optimalCombinations);
+  return optimalCombination;
 }
 
-export function resolveOptimalCombinationTie(
-  tiedCombinations: CourierPackageCombination[],
+export function isSinglePackageSameWeightTie(
+  combinations: CourierPackageCombination[],
+): boolean {
+  if (combinations.length <= 1) return false;
+
+  const allSinglePackage = combinations.every(
+    (c) => c.totalNumberOfPackages === 1,
+  );
+  if (!allSinglePackage) return false;
+
+  const firstWeight = combinations[0]!.totalWeight;
+  return combinations.every((c) => c.totalWeight === firstWeight);
+}
+
+export function resolveSinglePackageTieByDistance(
+  combinations: CourierPackageCombination[],
 ): CourierPackageCombination {
   const preferShorter =
     deliveryCostConfig.preferShorterDistance === true ||
     deliveryCostConfig.preferShorterDistance === "true";
 
-  const sorted = [...tiedCombinations].sort((a, b) => {
-    const distanceA = a.combination.reduce((sum, pkg) => sum + pkg.distance, 0);
-    const distanceB = b.combination.reduce((sum, pkg) => sum + pkg.distance, 0);
+  const sorted = [...combinations].sort((a, b) => {
+    const distanceA = a.combination[0]!.distance;
+    const distanceB = b.combination[0]!.distance;
     return preferShorter ? distanceA - distanceB : distanceB - distanceA;
   });
 

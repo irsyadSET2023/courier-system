@@ -142,3 +142,22 @@ src/
 
 2. **Future scalability — FIFO over optimal combinations:**
    In a multi-user or high-throughput scenario, computing the optimal combination for every batch would be prohibitively expensive. A more practical approach would be to adopt a FIFO-based strategy: first sort the packages by weight (descending) and distance (ascending or descending, based on configuration), then fill each vehicle by taking packages in order until the maximum carry weight is reached. The choice of sorting algorithm would also be evaluated — for nearly sorted or small datasets, algorithms like Timsort or insertion sort may outperform general-purpose sorts, while for larger volumes, a well-tuned quicksort or merge sort would be more appropriate. This trades combination optimality for predictable $O(n \log n)$ performance (dominated by the sort step) and simpler scheduling, which is more suitable for production systems handling large volumes of packages.
+
+## Usage of AI Tools
+
+AI tools were used selectively during the development of this project. Below is a breakdown of what was AI-assisted and what was done manually.
+
+### What AI helped with
+
+- **Code readability and arrangement:** Restructuring code around core functions to improve readability and maintainability.
+- **Terminal prompt handling:** Upgrading the CLI prompt logic to properly validate and handle user inputs, including the menu-based selection for delivery cost, delivery time, or both.
+- **Combination algorithm implementation:** The `generatePossibleDeliveryPackageCombinations` function was implemented with AI assistance after recalling the Combination algorithm ($^nC_r$) from Additional Mathematics. The recursive subset generation approach was suggested by AI based on this direction.
+- **Test case generation:** AI generated comprehensive test cases covering both the core requirements and edge cases (e.g. same-weight ties, same-weight-and-distance ties, boundary discount code validation, floating-point rounding).
+- **Documentation:** The README and inline documentation were generated with AI assistance.
+
+### What was done manually
+
+- **Project structure and folder organisation:** The directory layout, file naming, and module separation were all decided manually.
+- **User flow and program design:** The overall flow — from the entry point to the terminal prompt, through to the service functions — was designed and dictated manually.
+- **Function connectivity:** How the main functions connect to and delegate to sub-functions (e.g. `calculateTotalDeliveryTime` → `getMostSuitableCombination` → `generatePossibleDeliveryPackageCombinations`) was architected manually.
+- **Core business logic:** The delivery cost formula, discount validation rules, vehicle scheduling logic, and tie-breaking strategies were all defined manually.

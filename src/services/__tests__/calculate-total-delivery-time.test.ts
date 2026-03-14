@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   calculateTotalDeliveryTime,
   isSinglePackageSameWeightTie,
+  isSinglePackageSameWeightAndDistanceTie,
   resolveSinglePackageTieByDistance,
 } from "../calculate-total-delivery-time";
 import type {
@@ -155,6 +156,30 @@ describe("calculateTotalDeliveryTime", () => {
     const farPkg = pkg100Results.find((p) => p.name === "PKG_FAR")!;
     expect(nearPkg.deliveryTime!).toBeLessThan(farPkg.deliveryTime!);
   });
+
+  test("should send the first indexed package when same weight and same distance", () => {
+    const capacity: DeliveryCapacity = {
+      numberOfVehicles: 1,
+      maxSpeed: 70,
+      maxCarryWeight: 100,
+    };
+
+    const packages: CourierPackage[] = [
+      { name: "PKG_A", weight: 100, distance: 100, discountCodeName: null },
+      { name: "PKG_B", weight: 100, distance: 100, discountCodeName: null },
+      { name: "PKG_C", weight: 100, distance: 100, discountCodeName: null },
+    ];
+
+    const result = calculateTotalDeliveryTime(capacity, [
+      ...packages.map((p) => ({ ...p })),
+    ]);
+
+    expect(result).toHaveLength(3);
+    // Should be delivered in index order: PKG_A first, then PKG_B, then PKG_C
+    expect(result[0]!.name).toBe("PKG_A");
+    expect(result[1]!.name).toBe("PKG_B");
+    expect(result[2]!.name).toBe("PKG_C");
+  });
 });
 
 describe("isSinglePackageSameWeightTie", () => {
@@ -209,6 +234,48 @@ describe("isSinglePackageSameWeightTie", () => {
     ]);
 
     expect(isSinglePackageSameWeightTie([combA])).toBe(false);
+  });
+});
+
+describe("isSinglePackageSameWeightAndDistanceTie", () => {
+  function makeCombination(
+    packages: CourierPackage[],
+  ): CourierPackageCombination {
+    return {
+      combination: packages,
+      totalWeight: packages.reduce((sum, p) => sum + p.weight, 0),
+      totalNumberOfPackages: packages.length,
+    };
+  }
+
+  test("should return true when all single packages have same weight and distance", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 100, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG2", weight: 100, distance: 100, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightAndDistanceTie([combA, combB])).toBe(true);
+  });
+
+  test("should return false when distances differ", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 200, discountCodeName: null },
+    ]);
+    const combB = makeCombination([
+      { name: "PKG2", weight: 100, distance: 50, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightAndDistanceTie([combA, combB])).toBe(false);
+  });
+
+  test("should return false when only one combination exists", () => {
+    const combA = makeCombination([
+      { name: "PKG1", weight: 100, distance: 100, discountCodeName: null },
+    ]);
+
+    expect(isSinglePackageSameWeightAndDistanceTie([combA])).toBe(false);
   });
 });
 

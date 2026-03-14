@@ -38,6 +38,14 @@ function getMostSuitableCombination(
     );
 
   if (isSinglePackageSameWeightTie(filteredDeliveryPackageCombinations)) {
+    if (
+      isSinglePackageSameWeightAndDistanceTie(
+        filteredDeliveryPackageCombinations,
+      )
+    ) {
+      return filteredDeliveryPackageCombinations[0]!;
+    }
+
     return resolveSinglePackageTieByDistance(
       filteredDeliveryPackageCombinations,
     );
@@ -129,6 +137,17 @@ export function isSinglePackageSameWeightTie(
 
   const firstWeight = combinations[0]!.totalWeight;
   return combinations.every((c) => c.totalWeight === firstWeight);
+}
+
+export function isSinglePackageSameWeightAndDistanceTie(
+  combinations: CourierPackageCombination[],
+): boolean {
+  if (combinations.length <= 1) return false;
+
+  const firstDistance = combinations[0]!.combination[0]!.distance;
+  return combinations.every(
+    (c) => c.combination[0]!.distance === firstDistance,
+  );
 }
 
 export function resolveSinglePackageTieByDistance(

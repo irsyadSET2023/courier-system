@@ -126,3 +126,19 @@ src/
     ├── get-disccount.ts
     └── __tests__/                    # Test files
 ```
+
+## Assumptions
+
+1. **Tie-breaking for packages with the same weight but different distances:**
+   When multiple packages have the same weight and only one can be delivered at a time, the system breaks the tie based on distance. The preference (shorter or longer distance first) is configurable via the `PREFER_SHORTER_DISTANCE` environment variable. By default, the system prioritises the package with the shorter distance.
+
+2. **Tie-breaking for packages with the same weight and same distance:**
+   When packages are identical in both weight and distance, priority is given to the package that appears earlier in the input order (i.e. lower index). This ensures deterministic and predictable delivery sequencing.
+
+## Tradeoffs
+
+1. **Combination generation is computationally expensive:**
+   The `generatePossibleDeliveryPackageCombinations` function uses a recursive approach to generate all possible subsets of packages. This results in $O(2^n)$ time complexity, where $n$ is the number of remaining packages. While this guarantees finding the optimal combination for each delivery batch, it becomes impractical as the number of packages grows significantly.
+
+2. **Future scalability — FIFO over optimal combinations:**
+   In a multi-user or high-throughput scenario, computing the optimal combination for every batch would be prohibitively expensive. A more practical approach would be to adopt a FIFO-based strategy: first sort the packages by weight (descending) and distance (ascending or descending, based on configuration), then fill each vehicle by taking packages in order until the maximum carry weight is reached. The choice of sorting algorithm would also be evaluated — for nearly sorted or small datasets, algorithms like Timsort or insertion sort may outperform general-purpose sorts, while for larger volumes, a well-tuned quicksort or merge sort would be more appropriate. This trades combination optimality for predictable $O(n \log n)$ performance (dominated by the sort step) and simpler scheduling, which is more suitable for production systems handling large volumes of packages.

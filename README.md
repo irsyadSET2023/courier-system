@@ -147,10 +147,13 @@ src/
 
 ## Assumptions
 
-1. **Tie-breaking for packages with the same weight but different distances:**
+1. **Discount code boundary configuration (inclusive vs exclusive):**
+   Each discount code in the JSON configuration has four boolean flags — `includeMinimumWeight`, `includeMaximumWeight`, `includeMinimumDistance`, and `includeMaximumDistance` — that control whether the boundary value itself qualifies for the discount. When a flag is `true`, the check uses `>=` or `<=` (inclusive); when `false`, it uses `>` or `<` (exclusive). For example, OFR001 has `includeMaximumDistance: false` with `maximumDistance: 200`, meaning a package at exactly 200 km distance does **not** qualify — it must be strictly less than 200 km. In contrast, OFR001's `includeMaximumWeight: true` with `maximumWeight: 200` means a package weighing exactly 200 kg **does** qualify. This design allows each offer code to define its own boundary rules without requiring code changes.
+
+2. **Tie-breaking for packages with the same weight but different distances:**
    When multiple packages have the same weight and only one can be delivered at a time, the system breaks the tie based on distance. The preference (shorter or longer distance first) is configurable via the `PREFER_SHORTER_DISTANCE` environment variable. By default, the system prioritises the package with the shorter distance.
 
-2. **Tie-breaking for packages with the same weight and same distance:**
+3. **Tie-breaking for packages with the same weight and same distance:**
    When packages are identical in both weight and distance, priority is given to the package that appears earlier in the input order (i.e. lower index). This ensures deterministic and predictable delivery sequencing.
 
 ## Tradeoffs

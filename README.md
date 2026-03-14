@@ -161,3 +161,11 @@ AI tools were used selectively during the development of this project. Below is 
 - **User flow and program design:** The overall flow — from the entry point to the terminal prompt, through to the service functions — was designed and dictated manually.
 - **Function connectivity:** How the main functions connect to and delegate to sub-functions (e.g. `calculateTotalDeliveryTime` → `getMostSuitableCombination` → `generatePossibleDeliveryPackageCombinations`) was architected manually.
 - **Core business logic:** The delivery cost formula, discount validation rules, vehicle scheduling logic, and tie-breaking strategies were all defined manually.
+
+### AI tools used
+
+1. **ChatGPT / Claude (browser):** Used for discussions, brainstorming, and collecting ideas before writing any code. This includes validating approaches, exploring algorithm options, and refining requirements.
+
+2. **GitHub Copilot Agent (Claude Opus 4.6):** Used for auto-execution of finalised ideas — writing code, generating tests, and producing documentation. Only solid, well-defined tasks were passed to the agent for execution.
+
+3. **Workflow rationale:** By separating ideation (browser-based AI) from execution (Copilot agent), the number of prompts sent to GitHub Copilot is minimised. Only finalised and validated ideas are executed through the agent, reducing unnecessary iterations and keeping the cost of the GitHub Copilot Pro subscription efficient.

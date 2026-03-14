@@ -4,10 +4,11 @@ import type {
   DeliveryCapacity,
   VehicleDeliveryStatus,
 } from "../interfaces";
+import { deliveryCostConfig } from "../config/delivery-time";
 import { calculateVehicleDeliveryTime } from "./calculate-vehicle-delivery-time";
 
 export function calculateTotalDeliveryTime(
-  deliveryCapacity: DeliveryCapacity | null,
+  deliveryCapacity: DeliveryCapacity,
   courierPackagesMaster: CourierPackage[],
 ): CourierPackage[] {
   const courierPackageWithDeliveryTime =
@@ -33,8 +34,22 @@ function getMostSuitableCombination(
   const filteredDeliveryPackageCombinations =
     removeCombinationsExceedingCapacity(
       mappedDeliveryPackageCombinations,
-      deliveryCapacity!,
+      deliveryCapacity,
     );
+
+  if (isSinglePackageSameWeightTie(filteredDeliveryPackageCombinations)) {
+    if (
+      isSinglePackageSameWeightAndDistanceTie(
+        filteredDeliveryPackageCombinations,
+      )
+    ) {
+      return filteredDeliveryPackageCombinations[0]!;
+    }
+
+    return resolveSinglePackageTieByDistance(
+      filteredDeliveryPackageCombinations,
+    );
+  }
 
   const optimalCombination = getOptimalCombination(
     filteredDeliveryPackageCombinations,
@@ -106,7 +121,49 @@ function getOptimalCombination(
       mappedCombination.totalNumberOfPackages === maxPackages &&
       mappedCombination.totalWeight === maxWeight,
   )!;
+
   return optimalCombination;
+}
+
+export function isSinglePackageSameWeightTie(
+  combinations: CourierPackageCombination[],
+): boolean {
+  if (combinations.length <= 1) return false;
+
+  const allSinglePackage = combinations.every(
+    (c) => c.totalNumberOfPackages === 1,
+  );
+  if (!allSinglePackage) return false;
+
+  const firstWeight = combinations[0]!.totalWeight;
+  return combinations.every((c) => c.totalWeight === firstWeight);
+}
+
+export function isSinglePackageSameWeightAndDistanceTie(
+  combinations: CourierPackageCombination[],
+): boolean {
+  if (combinations.length <= 1) return false;
+
+  const firstDistance = combinations[0]!.combination[0]!.distance;
+  return combinations.every(
+    (c) => c.combination[0]!.distance === firstDistance,
+  );
+}
+
+export function resolveSinglePackageTieByDistance(
+  combinations: CourierPackageCombination[],
+): CourierPackageCombination {
+  const preferShorter =
+    deliveryCostConfig.preferShorterDistance === true ||
+    deliveryCostConfig.preferShorterDistance === "true";
+
+  const sorted = [...combinations].sort((a, b) => {
+    const distanceA = a.combination[0]!.distance;
+    const distanceB = b.combination[0]!.distance;
+    return preferShorter ? distanceA - distanceB : distanceB - distanceA;
+  });
+
+  return sorted[0]!;
 }
 
 function getHighestNumberOfPackagesPerDelivery(
@@ -153,10 +210,15 @@ function calculateEveryCourierPackageDeliveryTime(
     const courierPackagesWithTotalDeliveryTime = calculateVehicleDeliveryTime(
       deliveryCapacity.maxSpeed,
       courierPackageCombination,
+      vehicleForNextDelivery.totalDeliveryTime,
     );
 
-    courierPackagesWithTotalDeliveryTime.totalDeliveryTime +=
-      vehicleForNextDelivery.totalDeliveryTime;
+    courierPackagesWithTotalDeliveryTime.totalDeliveryTime =
+      Math.floor(
+        (courierPackagesWithTotalDeliveryTime.totalDeliveryTime +
+          vehicleForNextDelivery.totalDeliveryTime) *
+          100,
+      ) / 100;
 
     vehicleForNextDelivery.courierPackages =
       courierPackagesWithTotalDeliveryTime.courierPackages;

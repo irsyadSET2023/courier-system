@@ -16,6 +16,7 @@ export interface CourierDeliveryCost {
   packageName: string;
   discountValue: number;
   totalDeliveryCost: number;
+  deliveryTime?: number;
 }
 
 export interface TotalDeliveryCost {

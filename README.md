@@ -2,6 +2,24 @@
 
 A CLI-based courier delivery system built with [Bun](https://bun.sh). Calculate delivery costs (with discount codes) and estimate delivery times for packages.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Setup](#setup)
+- [Environment Variables (Optional)](#environment-variables-optional)
+- [Running the App](#running-the-app)
+  - [Example CLI Session — Delivery Cost Only](#example-cli-session--delivery-cost-only)
+  - [Example CLI Session — Delivery Time Only](#example-cli-session--delivery-time-only)
+  - [Available Discount Codes](#available-discount-codes)
+- [Running Tests](#running-tests)
+- [Project Structure](#project-structure)
+- [Assumptions](#assumptions)
+- [Tradeoffs](#tradeoffs)
+- [Usage of AI Tools](#usage-of-ai-tools)
+  - [What AI helped with](#what-ai-helped-with)
+  - [What was done manually](#what-was-done-manually)
+  - [AI tools used](#ai-tools-used)
+
 ## Prerequisites
 
 - [Bun](https://bun.sh) v1.0 or later
